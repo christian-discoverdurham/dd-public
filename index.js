@@ -1,7 +1,6 @@
 // Constants for image URLs
 const PLACEHOLDER_IMAGE_URL =
   "https://s3.us-east-1.amazonaws.com/durham-2019/images/DD-Website-Events-Placeholder.jpg?v=1744653584";
-  
 
 // Function to handle lazyloaded images
 const handleLazyloadedImage = (image) => {
@@ -62,8 +61,6 @@ const updatePlaceholderImages = () => {
 
 // Execute the observation when the DOM is fully loaded
 if (location.pathname === "/events/") {
-  document.addEventListener("DOMContentLoaded", () => {
-    observeLazyLoading();
-    updatePlaceholderImages();
-  });
+  observeLazyLoading();
+  updatePlaceholderImages();
 }

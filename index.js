@@ -247,6 +247,20 @@ if (location.pathname === "/events/") {
     return currentPathNormalized;
   };
 
+
+
+  const getCookieValue = (name) => {
+    const nameEQ = encodeURIComponent(name) + "=";
+    const ca = document.cookie.split(";");
+    for (let i = 0; i < ca.length; i++) {
+      let c = ca[i];
+      while (c.charAt(0) === " ") c = c.substring(1, c.length);
+      if (c.indexOf(nameEQ) === 0)
+        return decodeURIComponent(c.substring(nameEQ.length, c.length));
+    }
+    return null;
+  };
+
   const currentPathNormalized = getPageName();
   //console.log("Current path normalized:", currentPathNormalized);
 
@@ -272,18 +286,6 @@ if (location.pathname === "/events/") {
     //console.log("Current page is not in the valid pages list.");
     return;
   }
-
-  const getCookieValue = (name) => {
-    const nameEQ = encodeURIComponent(name) + "=";
-    const ca = document.cookie.split(";");
-    for (let i = 0; i < ca.length; i++) {
-      let c = ca[i];
-      while (c.charAt(0) === " ") c = c.substring(1, c.length);
-      if (c.indexOf(nameEQ) === 0)
-        return decodeURIComponent(c.substring(nameEQ.length, c.length));
-    }
-    return null;
-  };
 
   const cookieName = `${
     currentPathNormalized ? currentPathNormalized : "home"

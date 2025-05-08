@@ -65,6 +65,9 @@ if (location.pathname === "/events/") {
   updatePlaceholderImages();
 }
 
+// AB Testing for Hero Images
+// This script is designed to randomly select and display different hero images on specific pages of a website.
+
 (function () {
   const imageList = {
     events: {
@@ -217,6 +220,7 @@ if (location.pathname === "/events/") {
     // For HTTPS only sites, you might add ";Secure"
     // document.cookie = `${encodedCookieName}=${encodedCookieValue}${expiresAttribute};path=/;SameSite=Lax;Secure`;
 
+    /*
     console.log(
       `Cookie "${cookieName}" set with value: "${cookieValue}". Expires in: ${
         expirationDays > 0
@@ -228,6 +232,7 @@ if (location.pathname === "/events/") {
           : "default (7 days if not specified or invalid)"
       }.`
     );
+    */
     return true;
   }
 
@@ -243,7 +248,7 @@ if (location.pathname === "/events/") {
   };
 
   const currentPathNormalized = getPageName();
-  console.log("Current path normalized:", currentPathNormalized);
+  //console.log("Current path normalized:", currentPathNormalized);
 
   //this only works on certain pages, create an array of pages to check against
   const validPages = [
@@ -260,11 +265,11 @@ if (location.pathname === "/events/") {
     const abTestingCookie = getCookieValue("ABTesting");
     if (abTestingCookie) {
       setCookie("ABTesting", "", -1); // Set to expire immediately
-      console.log("ABTesting cookie removed.");
+      //console.log("ABTesting cookie removed.");
     } else {
-      console.log("No ABTesting cookie found to remove.");
+      //console.log("No ABTesting cookie found to remove.");
     }
-    console.log("Current page is not in the valid pages list.");
+    //console.log("Current page is not in the valid pages list.");
     return;
   }
 
@@ -297,7 +302,7 @@ if (location.pathname === "/events/") {
   setCookie("ABTesting", cookieValue, 1);
 
   if (cookieValue !== "1") {
-    console.log(imageList[currentPathNormalized][cookieValue]);
+    //console.log(imageList[currentPathNormalized][cookieValue]);
     document.querySelector(".slides__item").dataset.srcXl =
       imageList[currentPathNormalized][cookieValue]["image"];
     document.querySelector(".slides__item").dataset.srcLg =

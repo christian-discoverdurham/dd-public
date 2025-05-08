@@ -315,10 +315,10 @@ if (location.pathname === "/events/") {
     document.querySelector("p.slides__title").innerText =
       imageList[currentPathNormalized][cookieValue]["caption"];
     if (
-      document.querySelector(".slides__item").classList.contains("lazyload")
+      document.querySelector(".slides__item").classList.contains("is-loaded")
     ) {
       document.querySelector(".slides__item").style.backgroundImage =
-        "url(" + imageList[currentPathNormalized][cookieValue]["image"] + ")";
+        'url("' + imageList[currentPathNormalized][cookieValue]["image"] + '")';
     }
   }
 })();

@@ -294,13 +294,13 @@ if (location.pathname === "/events/") {
     setCookie(cookieName, randomImageNumber, 30);
     cookieValue = randomImageNumber;
   }
-
+/*
   dataLayer.push({
     event: "heroABTesting",
   });
 
   setCookie("ABTesting", cookieValue, 1);
-
+*/
   if (cookieValue != "1") {
     //console.log("getIn", cookieValue  );
     //console.log(imageList[currentPathNormalized][cookieValue]);
@@ -321,4 +321,5 @@ if (location.pathname === "/events/") {
         'url("' + imageList[currentPathNormalized][cookieValue]["image"] + '")';
     }
   }
+  setCookie("ABTesting", cookieValue, -1);
 })();

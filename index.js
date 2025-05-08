@@ -301,7 +301,7 @@ if (location.pathname === "/events/") {
 
   setCookie("ABTesting", cookieValue, 1);
 
-  if (cookieValue !== "1") {
+  if (cookieValue != "1") {
     //console.log(imageList[currentPathNormalized][cookieValue]);
     document.querySelector(".slides__item").dataset.srcXl =
       imageList[currentPathNormalized][cookieValue]["image"];

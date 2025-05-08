@@ -302,6 +302,7 @@ if (location.pathname === "/events/") {
   setCookie("ABTesting", cookieValue, 1);
 
   if (cookieValue != "1") {
+    //console.log("getIn", cookieValue  );
     //console.log(imageList[currentPathNormalized][cookieValue]);
     document.querySelector(".slides__item").dataset.srcXl =
       imageList[currentPathNormalized][cookieValue]["image"];
@@ -313,5 +314,11 @@ if (location.pathname === "/events/") {
       imageList[currentPathNormalized][cookieValue]["image"];
     document.querySelector("p.slides__title").innerText =
       imageList[currentPathNormalized][cookieValue]["caption"];
+    if (
+      document.querySelector(".slides__item").classList.contains("lazyload")
+    ) {
+      document.querySelector(".slides__item").style.backgroundImage =
+        "url(" + imageList[currentPathNormalized][cookieValue]["image"] + ")";
+    }
   }
 })();

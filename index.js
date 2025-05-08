@@ -1,74 +1,72 @@
-// Constants for image URLs
-const PLACEHOLDER_IMAGE_URL =
-  "https://s3.us-east-1.amazonaws.com/durham-2019/images/DD-Website-Events-Placeholder.jpg?v=1744653584";
+(function () {
+  // --- Constants ---
+  const PLACEHOLDER_IMAGE_URL =
+    "https://s3.us-east-1.amazonaws.com/durham-2019/images/DD-Website-Events-Placeholder.jpg?v=1744653584";
 
-// Function to handle lazyloaded images
-const handleLazyloadedImage = (image) => {
-  if (!image || !image.src) return; // Ensure the image is valid
+  // --- 1. Generic Placeholder Image Logic ---
 
-  //console.log("Image has been lazyloaded:", image);
+  // Function to handle lazyloaded GENERIC images (not the A/B slider)
+  const handleGenericLazyloadedImage = (image) => {
+    if (!image || !image.src) return;
 
-  // Replace placeholder image source
-  if (image.src.includes("placeholder_")) {
-    image.src = PLACEHOLDER_IMAGE_URL;
-    //console.log("Image source changed to:", image.src);
-  }
-
-  // Add any additional logic for lazyloaded images here
-};
-
-// Function to observe changes in the DOM and handle lazyloaded images
-const observeLazyLoading = () => {
-  // Create a MutationObserver instance
-  const observer = new MutationObserver((mutationsList) => {
-    for (const mutation of mutationsList) {
-      if (
-        mutation.type === "attributes" &&
-        mutation.attributeName === "class"
-      ) {
-        const target = mutation.target;
-        if (
-          target.tagName === "IMG" &&
-          target.classList.contains("lazyloaded")
-        ) {
-          handleLazyloadedImage(target);
-        }
-      }
+    if (image.src.includes("placeholder_")) {
+      image.src = PLACEHOLDER_IMAGE_URL;
+      // console.log("Generic image source changed to placeholder:", image.src);
     }
-  });
-
-  // Configuration for the observer
-  const config = {
-    attributes: true,
-    subtree: true,
-    attributeFilter: ["class"],
   };
 
-  // Observe the entire body for changes
-  observer.observe(document.body, config);
-};
+  // Function to observe changes in the DOM for GENERIC lazyloaded images
+  const observeGenericLazyLoading = () => {
+    const observer = new MutationObserver((mutationsList) => {
+      for (const mutation of mutationsList) {
+        if (
+          mutation.type === "attributes" &&
+          mutation.attributeName === "class"
+        ) {
+          const target = mutation.target;
+          // Only handle IMG tags that are not part of the main slider
+          if (
+            target.tagName === "IMG" &&
+            !target.classList.contains("slides__item") && // Ensure it's not the slider element if it were an img
+            target.classList.contains("lazyloaded")
+          ) {
+            handleGenericLazyloadedImage(target);
+          }
+        }
+      }
+    });
 
-// Function to update data-src attributes for placeholder images
-const updatePlaceholderImages = () => {
-  const images = document.querySelectorAll("img[data-src]");
-  images.forEach((image) => {
-    if (image.dataset.src?.includes("placeholder_")) {
-      image.dataset.src = PLACEHOLDER_IMAGE_URL;
-      //console.log("Image data-src changed to:", image.dataset.src);
-    }
-  });
-};
+    const config = {
+      attributes: true,
+      subtree: true,
+      attributeFilter: ["class"],
+    };
+    observer.observe(document.body, config);
+  };
 
-// Execute the observation when the DOM is fully loaded
-if (location.pathname === "/events/") {
-  observeLazyLoading();
-  updatePlaceholderImages();
-}
+  // Function to update data-src attributes for GENERIC placeholder images
+  const updateGenericPlaceholderImages = () => {
+    const images = document.querySelectorAll("img[data-src]");
+    images.forEach((image) => {
+      // Ensure it's not the slider element if it were an img and had data-src
+      if (
+        !image.classList.contains("slides__item") &&
+        image.dataset.src?.includes("placeholder_")
+      ) {
+        image.dataset.src = PLACEHOLDER_IMAGE_URL;
+        // console.log("Generic image data-src changed to placeholder:", image.dataset.src);
+      }
+    });
+  };
 
-// AB Testing for Hero Images
-// This script is designed to randomly select and display different hero images on specific pages of a website.
+  // Execute generic placeholder observation only on /events/
+  // (Or adjust this condition if needed for wider application)
+  if (window.location.pathname === "/events/") {
+    observeGenericLazyLoading();
+    updateGenericPlaceholderImages();
+  }
 
-(function () {
+  // --- 2. A/B Testing for Hero Images ---
   const imageList = {
     events: {
       2: {
@@ -118,31 +116,30 @@ if (location.pathname === "/events/") {
         caption: "Wheels Durham",
       },
     },
+    // It's good practice to have a "1" or default entry if your random number can generate it,
+    // or ensure your random number logic aligns with available keys (2 and 3 in this case).
+    // For simplicity, we assume "1" is control and doesn't require an imageList entry here.
   };
 
+  // --- Helper Functions (generateRandomNumber, setCookie, getCookieValue, getPageName) ---
+  // (Keeping your helper functions as they are, they seem fine)
   function generateSecureRandomInt(min, max) {
     min = Math.ceil(min);
     max = Math.floor(max);
     const range = max - min + 1;
-
     const bytesNeeded = Math.ceil(Math.log2(range) / 8);
-    if (bytesNeeded === 0) return min;
-
+    if (bytesNeeded === 0) return min; // if min === max
     const MASK = (1 << (bytesNeeded * 8)) - 1;
-
     let randomNumber;
-
     do {
       const randomBytes = new Uint8Array(bytesNeeded);
       window.crypto.getRandomValues(randomBytes);
-
       randomNumber = 0;
       for (let i = 0; i < bytesNeeded; i++) {
         randomNumber = (randomNumber << 8) + randomBytes[i];
       }
       randomNumber = randomNumber & MASK;
     } while (randomNumber >= range * Math.floor(MASK / range));
-
     return min + (randomNumber % range);
   }
 
@@ -158,18 +155,12 @@ if (location.pathname === "/events/") {
       );
       return null;
     }
-
-    // Ensure min is less than or equal to max by swapping if necessary
     if (min > max) {
       console.warn(
         "Warning (generateRandomNumber): 'min' was greater than 'max'. Swapping values."
       );
-      [min, max] = [max, min]; // Swaps min and max
+      [min, max] = [max, min];
     }
-
-    // Using the secure generator.
-    // If you prefer the simpler Math.random() for non-critical cases, you can use:
-    // return Math.floor(Math.random() * (max - min + 1)) + min;
     try {
       return generateSecureRandomInt(min, max);
     } catch (error) {
@@ -177,8 +168,6 @@ if (location.pathname === "/events/") {
         "Error (generateRandomNumber) while generating secure random int:",
         error
       );
-      // Fallback or re-throw, depending on desired behavior
-      // For simplicity here, returning null on error from secure generator
       return null;
     }
   }
@@ -190,61 +179,32 @@ if (location.pathname === "/events/") {
       );
       return false;
     }
-    if (cookieValue === undefined || cookieValue === null) {
-      console.warn(
-        "Warning (setCookie): 'cookieValue' is undefined or null. Setting an empty cookie or a cookie with 'null' string."
-      );
-      // Decide how to handle: you could return false, or proceed with an empty/null string
-    }
-
     let expiresAttribute = "";
     if (expirationDays !== undefined && typeof expirationDays === "number") {
-      // Check if defined, as 0 is a valid value
       if (expirationDays > 0) {
         const date = new Date();
         date.setTime(date.getTime() + expirationDays * 24 * 60 * 60 * 1000);
         expiresAttribute = ";expires=" + date.toUTCString();
       } else if (expirationDays < 0) {
-        // To delete a cookie
         const date = new Date();
-        date.setTime(date.getTime() - 24 * 60 * 60 * 1000); // Expire yesterday
+        date.setTime(date.getTime() - 24 * 60 * 60 * 1000);
         expiresAttribute = ";expires=" + date.toUTCString();
       }
-      // If expirationDays is 0, it's a session cookie (no expires attribute)
     }
-
-    const encodedCookieValue = encodeURIComponent(String(cookieValue)); // Ensure value is a string before encoding
+    const encodedCookieValue = encodeURIComponent(String(cookieValue));
     const encodedCookieName = encodeURIComponent(cookieName);
-
     document.cookie = `${encodedCookieName}=${encodedCookieValue}${expiresAttribute};path=/;SameSite=Lax`;
-    // For HTTPS only sites, you might add ";Secure"
-    // document.cookie = `${encodedCookieName}=${encodedCookieValue}${expiresAttribute};path=/;SameSite=Lax;Secure`;
-
-    /*
-    console.log(
-      `Cookie "${cookieName}" set with value: "${cookieValue}". Expires in: ${
-        expirationDays > 0
-          ? expirationDays + " days"
-          : expirationDays === 0
-          ? "session"
-          : expirationDays < 0
-          ? "expired (attempted delete)"
-          : "default (7 days if not specified or invalid)"
-      }.`
-    );
-    */
     return true;
   }
 
   const getPageName = () => {
     const currentPath = window.location.pathname;
-    const currentPathNormalized = currentPath
+    return currentPath
       .toLowerCase()
       .normalize("NFD")
       .replace(/[\u0300-\u036f]/g, "")
       .replace(/[^\w]+/g, "_")
       .replace(/^_+|_+$/g, "");
-    return currentPathNormalized;
   };
 
   const getCookieValue = (name) => {
@@ -259,67 +219,152 @@ if (location.pathname === "/events/") {
     return null;
   };
 
-  const currentPathNormalized = getPageName();
-  //console.log("Current path normalized:", currentPathNormalized);
-
-  //this only works on certain pages, create an array of pages to check against
-  const validPages = [
+  // --- A/B Test Core Logic ---
+  const currentPathNormalized = getPageName() || "home"; // Ensure home fallback if path is empty
+  const validPagesForABTest = [
     "events",
     "food_drink",
     "food_drink_restaurants",
     "things_to_do",
     "home",
   ];
-  const isValidPage = validPages.includes(currentPathNormalized);
-  if (!isValidPage) {
-    //remove ABTesting cookie if it exists
 
+  if (!validPagesForABTest.includes(currentPathNormalized)) {
     const abTestingCookie = getCookieValue("ABTesting");
     if (abTestingCookie) {
-      setCookie("ABTesting", "", -1); // Set to expire immediately
-      //console.log("ABTesting cookie removed.");
+      setCookie("ABTesting", "", -1);
+    }
+    // console.log("A/B Test: Current page not in valid pages list for hero A/B test.");
+    return; // Exit if not a page for A/B testing hero images
+  }
+
+  // Determine A/B test variant
+  const abTestCookieName = `${currentPathNormalized}_random_value`;
+  let abTestVariantCookie = getCookieValue(abTestCookieName);
+  if (!abTestVariantCookie) {
+    // Assuming variants are 2 and 3. Control is 1.
+    // If you want 1, 2, 3 to be randomly assigned: generateRandomNumber(1, 3)
+    // If "1" is always control and "2", "3" are variants:
+    const randomImageNumber = generateRandomNumber(
+      1,
+      Object.keys(imageList[currentPathNormalized] || {}).length + 1
+    ); // e.g. 1 to 3 for 2 images
+    setCookie(abTestCookieName, randomImageNumber, 30);
+    abTestVariantCookie = randomImageNumber.toString(); // Ensure it's a string for comparison
+  }
+
+  // Push to dataLayer (seems fine)
+  if (typeof dataLayer !== "undefined") {
+    dataLayer.push({
+      event: "heroABTesting",
+      abTestVariant: abTestVariantCookie,
+    });
+  } else {
+    // console.warn("dataLayer is not defined. Skipping heroABTesting event push.");
+  }
+
+  setCookie("ABTesting", abTestVariantCookie, 1); // General ABTesting cookie
+
+  // --- Function to Update Hero Slider Image for A/B Test ---
+  function updateHeroSliderABTest(imageDetails) {
+    const sliderItem = document.querySelector(".slides__item");
+    if (!sliderItem || !imageDetails || !imageDetails.image) {
+      // console.log("A/B Test: Slider item or image details not found for update.");
+      return;
+    }
+
+    // console.log("A/B Test: Updating slider with:", imageDetails);
+
+    // Update data attributes (important for some lazy loaders or responsive image handlers)
+    sliderItem.dataset.srcXl = imageDetails.image;
+    sliderItem.dataset.srcLg = imageDetails.image;
+    sliderItem.dataset.srcMd = imageDetails.image;
+    sliderItem.dataset.srcSm = imageDetails.image;
+    // If your slider uses a generic data-src, update that too
+    // sliderItem.dataset.src = imageDetails.image;
+
+    // Update caption
+    const captionElement = document.querySelector("p.slides__title");
+    if (captionElement) {
+      captionElement.innerText = imageDetails.caption || "";
+    }
+
+    // *Crucially, set the background image directly*
+    // This often preempts or correctly overrides the slider's own lazy loader
+    sliderItem.style.backgroundImage = `url("${imageDetails.image}")`;
+
+    // Optional: If the slider uses classes like 'is-loading' and then 'is-loaded',
+    // you might want to ensure 'is-loaded' is present and 'is-loading' is absent.
+    // sliderItem.classList.add('is-loaded');
+    // sliderItem.classList.remove('is-loading');
+  }
+
+  // --- Function to Observe Slider for A/B Test (Fallback for late loading) ---
+  let sliderObserver = null;
+  function observeSliderForABTest(imageDetailsToApply) {
+    const sliderItem = document.querySelector(".slides__item");
+    if (!sliderItem || !imageDetailsToApply) return;
+
+    // Disconnect previous observer if any, to avoid multiple observers on the same element
+    if (sliderObserver) {
+      sliderObserver.disconnect();
+    }
+
+    sliderObserver = new MutationObserver((mutationsList, observer) => {
+      for (const mutation of mutationsList) {
+        if (
+          mutation.type === "attributes" &&
+          mutation.attributeName === "class"
+        ) {
+          const target = mutation.target;
+          // Check for classes that indicate the slider has initialized/loaded this slide
+          // Common classes: 'lazyloaded', 'is-loaded', 'slick-active' (for Slick slider)
+          // Adjust this condition based on your slider's specific classes
+          if (
+            target.classList.contains("lazyloaded") ||
+            target.classList.contains("is-loaded") ||
+            target.classList.contains("slick-active")
+          ) {
+            // console.log("A/B Test Observer: Slider item class changed, re-applying A/B image.");
+            updateHeroSliderABTest(imageDetailsToApply); // Re-apply the image
+
+            // Optional: Once applied successfully after lazy load, you might disconnect
+            // observer.disconnect();
+            // sliderObserver = null; // Clear the global reference
+            // This depends on whether the class might be added and removed multiple times.
+          }
+        }
+      }
+    });
+
+    const config = { attributes: true, attributeFilter: ["class"] };
+    sliderObserver.observe(sliderItem, config);
+    // console.log("A/B Test: Observer set up for .slides__item");
+  }
+
+  // --- Apply A/B Test to Hero Slider ---
+  // Check if it's a variant group (not control group "1")
+  if (abTestVariantCookie && abTestVariantCookie !== "1") {
+    const imageDetails =
+      imageList[currentPathNormalized]?.[abTestVariantCookie];
+
+    if (imageDetails) {
+      // Attempt to update the image immediately
+      updateHeroSliderABTest(imageDetails);
+
+      // Also, set up an observer for the slider item as a fallback
+      // This ensures that if the 'lazyloaded' or 'is-loaded' class is added *after*
+      // our initial update, we re-apply the A/B test image.
+      observeSliderForABTest(imageDetails);
     } else {
-      //console.log("No ABTesting cookie found to remove.");
+      // console.log(`A/B Test: No image details found for ${currentPathNormalized}, variant ${abTestVariantCookie}`);
     }
-    //console.log("Current page is not in the valid pages list.");
-    return;
-  }
-
-  const cookieName = `${
-    currentPathNormalized ? currentPathNormalized : "home"
-  }_randomValue`;
-  let cookieValue = getCookieValue(cookieName);
-  if (!cookieValue) {
-    const randomImageNumber = generateRandomNumber(1, 3);
-    setCookie(cookieName, randomImageNumber, 30);
-    cookieValue = randomImageNumber;
-  }
-/*
-  dataLayer.push({
-    event: "heroABTesting",
-  });
-
-  setCookie("ABTesting", cookieValue, 1);
-*/
-  if (cookieValue != "1") {
-    //console.log("getIn", cookieValue  );
-    //console.log(imageList[currentPathNormalized][cookieValue]);
-    document.querySelector(".slides__item").dataset.srcXl =
-      imageList[currentPathNormalized][cookieValue]["image"];
-    document.querySelector(".slides__item").dataset.srcLg =
-      imageList[currentPathNormalized][cookieValue]["image"];
-    document.querySelector(".slides__item").dataset.srcMd =
-      imageList[currentPathNormalized][cookieValue]["image"];
-    document.querySelector(".slides__item").dataset.srcSm =
-      imageList[currentPathNormalized][cookieValue]["image"];
-    document.querySelector("p.slides__title").innerText =
-      imageList[currentPathNormalized][cookieValue]["caption"];
-    if (
-      document.querySelector(".slides__item").classList.contains("is-loaded")
-    ) {
-      document.querySelector(".slides__item").style.backgroundImage =
-        'url("' + imageList[currentPathNormalized][cookieValue]["image"] + '")';
+  } else {
+    // console.log("A/B Test: Control group (1) or no cookie, no hero image change.");
+    // Ensure any A/B test specific observer is disconnected if we are in control group
+    if (sliderObserver) {
+      sliderObserver.disconnect();
+      sliderObserver = null;
     }
   }
-  setCookie("ABTesting", cookieValue, -1);
 })();

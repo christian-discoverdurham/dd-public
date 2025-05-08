@@ -247,8 +247,6 @@ if (location.pathname === "/events/") {
     return currentPathNormalized;
   };
 
-
-
   const getCookieValue = (name) => {
     const nameEQ = encodeURIComponent(name) + "=";
     const ca = document.cookie.split(";");

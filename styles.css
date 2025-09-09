@@ -29,4 +29,8 @@
     position: relative;
     z-index: 2;
   }
+  .slides__title {
+    max-width: 60%;
+    line-height: 1.4;
+  }
 }

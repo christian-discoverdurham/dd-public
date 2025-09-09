@@ -154,4 +154,7 @@
   .wthr__measure {
     margin: 0;
   }
+  div#wthr-h-canvas {
+    height: 42px;
+  }
 }

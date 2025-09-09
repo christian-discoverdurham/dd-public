@@ -145,4 +145,13 @@
   .dir__map-toggle {
     top: 8rem;
   }
+
+  a#wthr-widget {
+    margin: 0;
+    padding: 0;
+  }
+
+  .wthr__measure {
+    margin: 0;
+  }
 }

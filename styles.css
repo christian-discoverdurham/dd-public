@@ -1,0 +1,28 @@
+@media (max-width: 414px) {
+  .slides--interior {
+    height: 50vh !important;
+    margin: 0;
+  }
+  .cc-window .cc-message {
+    line-height: 1.4;
+    margin: 0 0 8px;
+  }
+  .cc-window.cc-floating.cc-type-info.cc-theme-block {
+    max-width: 75%;
+    bottom: 10px;
+    right: 20px;
+    left: auto;
+    padding: 16px 20px;
+    filter: drop-shadow(0px 0px 7px rgba(0, 0, 0, 0.1));
+    border-radius: 8px;
+  }
+
+  .slides__pictured {
+    display: none;
+  }
+
+  .slides__caption {
+    height: inherit;
+    transform: translateY(1rem);
+  }
+}

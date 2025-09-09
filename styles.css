@@ -137,8 +137,12 @@
     top: 12px;
     left: 14px;
   }
-  
+
   div#p-search-container {
     top: 100%;
+  }
+
+  .dir__map-toggle {
+    top: 8rem;
   }
 }

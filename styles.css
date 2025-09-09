@@ -16,13 +16,17 @@
     filter: drop-shadow(0px 0px 7px rgba(0, 0, 0, 0.1));
     border-radius: 8px;
   }
-
   .slides__pictured {
     display: none;
   }
-
   .slides__caption {
     height: inherit;
     transform: translateY(1rem);
+  }
+  nav#breadcrumbs {
+    border-top: 4px solid white;
+    margin-top: -1px;
+    position: relative;
+    z-index: 2;
   }
 }

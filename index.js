@@ -307,3 +307,137 @@
     }
   }
 })();
+
+// visitwidget.js (replace the top config + openModal with this version)
+
+(function () {
+  const BASE_URL = 'https://discoverdurham.visitwidget.com';
+  const BUTTON_TEXT = 'Plan My Trip';
+  const IFRAME_ID = '1564'; // same as original widget
+
+  let iframeLoaded = false;
+
+  function getCookie(name) {
+    const value = `; ${document.cookie}`;
+    const parts = value.split(`; ${name}=`);
+    if (parts.length === 2) return parts.pop().split(';').shift();
+    return undefined;
+  }
+
+  function setCookie(name, value, days) {
+    const d = new Date();
+    d.setTime(d.getTime() + days * 24 * 60 * 60 * 1000);
+    document.cookie = `${name}=${value};expires=${d.toUTCString()};path=/`;
+  }
+
+  function getOrCreateExternalPlanId() {
+    const COOKIE_NAME = 'visitWidgetExternalPlanId';
+    let id = getCookie(COOKIE_NAME);
+    if (!id) {
+      // Simple UUID v4-ish generator
+      id = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+        const r = (Math.random() * 16) | 0;
+        const v = c === 'x' ? r : (r & 0x3) | 0x8;
+        return v.toString(16);
+      });
+      setCookie(COOKIE_NAME, id, 365);
+    }
+    return id;
+  }
+
+  function buildWidgetUrl() {
+    const url = new URL(BASE_URL);
+    const params = url.searchParams;
+
+    // Match key behavior from original script
+    params.set('iframe_id', IFRAME_ID);
+
+    const externalPlanId = getOrCreateExternalPlanId();
+    params.set('external_plan_id', externalPlanId);
+    params.set('disable_map_cooperative_gesture_handling', 'true');
+
+    return url.toString();
+  }
+
+  function createDom() {
+    const root = document.createElement('div');
+    root.className = 'vw-root';
+
+    const button = document.createElement('button');
+    button.id = 'open-visitwidget';
+    button.type = 'button';
+
+    // Icon (inline SVG from itineraries.svg)
+    button.innerHTML = `
+      <span id="open-visitwidget-icon" aria-hidden="true">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+          <path d="m482.32 75 25.98-35.73c4.56-6.26 3.17-15.03-3.09-19.59-2.4-1.74-5.29-2.68-8.25-2.68h-97.95v-2c0-7.73-6.27-14-14-14s-14 6.27-14 14v194h-18c-7.73 0-14 6.27-14 14s6.27 14 14 14h64c7.73 0 14-6.27 14-14s-6.27-14-14-14h-18v-76h97.95c7.75 0 14.02-6.28 14.03-14.02 0-2.96-.94-5.85-2.68-8.25L482.33 75Z" />
+          <path d="M393.01 297h-88c-32.03 0-58-25.97-58-58s25.97-58 58-58h24c7.73 0 14-6.27 14-14s-6.27-14-14-14h-24c-47.5 0-86 38.5-86 86s38.5 86 86 86h88c32.03 0 58 25.97 58 58s-25.97 58-58 58h-200c-7.73 0-14 6.27-14 14s6.27 14 14 14h200c47.5 0 86-38.5 86-86s-38.5-86-86-86" />
+          <path d="M202.52 392.04s-21.55-11.29-38.73-15.97c18.84-16.88 30.7-41.39 30.7-68.68 0-1.15-.13-2.26-.17-3.39-13.16 28.62-39.2 50.08-70.72 56.84-6.67-2.31-13.83-3.57-21.29-3.57s-14.62 1.26-21.28 3.57c-31.52-6.76-57.56-28.22-70.72-56.84-.04 1.14-.17 2.25-.17 3.39 0 27.16 11.75 51.58 30.45 68.45-17.31 4.53-39.58 16.2-39.58 16.2s21.2 15.97 37.5 17.8c-.78 4.02-1.19 8.18-1.19 12.43 0 19.26 8.38 36.55 21.68 48.45-.52 2.09-.81 4.24-.81 6.44 0 33.83 19.76 33.83 44.13 33.83s44.13 0 44.13-33.83c0-2.2-.28-4.36-.81-6.44 13.3-11.9 21.68-29.2 21.68-48.45 0-4.3-.42-8.5-1.22-12.57 16.14-2.38 36.43-17.66 36.43-17.66Z" />
+        </svg>
+      </span>
+      <span id="open-visitwidget-text">${BUTTON_TEXT}</span>
+    `;
+    root.appendChild(button);
+
+    const modal = document.createElement('div');
+    modal.id = 'vw-modal';
+
+    const modalWindow = document.createElement('div');
+    modalWindow.id = 'vw-modal-window';
+
+    const closeBtn = document.createElement('button');
+    closeBtn.id = 'vw-close';
+    closeBtn.type = 'button';
+    closeBtn.setAttribute('aria-label', 'Close trip planner');
+    closeBtn.textContent = 'X';
+
+    const iframeContainer = document.createElement('div');
+    iframeContainer.id = 'vw-iframe-container';
+
+    const iframe = document.createElement('iframe');
+    iframe.id = 'vw-iframe';
+    iframe.setAttribute('allow', 'geolocation; fullscreen; clipboard-write');
+    // Lazy: set URL only when opened
+    iframe.dataset.src = 'lazy'; // marker, actual URL built on first open
+
+    iframeContainer.appendChild(iframe);
+    modalWindow.appendChild(closeBtn);
+    modalWindow.appendChild(iframeContainer);
+    modal.appendChild(modalWindow);
+
+    root.appendChild(modal);
+
+    document.body.appendChild(root);
+    document.body.classList.add('vw-has-visitwidget-button');
+
+    button.addEventListener('click', () => openModal(modal, iframe));
+    closeBtn.addEventListener('click', () => closeModal(modal));
+    modal.addEventListener('click', (evt) => {
+      if (evt.target === modal) closeModal(modal);
+    });
+  }
+
+  function openModal(modal, iframe) {
+    if (!iframeLoaded) {
+      iframe.src = buildWidgetUrl();
+      iframeLoaded = true;
+    }
+    modal.style.display = 'block';
+    document.documentElement.style.overflow = 'hidden';
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeModal(modal) {
+    modal.style.display = 'none';
+    document.documentElement.style.overflow = '';
+    document.body.style.overflow = '';
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', createDom);
+  } else {
+    createDom();
+  }
+})();
+
